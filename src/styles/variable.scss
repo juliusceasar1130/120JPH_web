@@ -1,0 +1,17 @@
+//给项目提供的全局变量,需要再vite.config.ts中注册
+//左侧菜单的宽度
+
+//1920*1080
+
+$base-menu-width: 185px;  
+//左侧菜单的背景颜色
+//$base-menu-background: #001529;
+$base-menu-background: #001515;
+//顶部导航的高度
+$base-tabbar-height: 50px;
+//左侧菜单LOGO的设置
+$base-menu-logo-height: 50px;
+$base-menu-logo-width: 400px;
+$base-menu-min-width: 50px;
+//左侧菜单logo文字大小
+$base-logo-title-fontSize: 15px;

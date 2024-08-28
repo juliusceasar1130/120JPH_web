@@ -6,7 +6,7 @@ import useUserStore from '@/store/modules/user'
 //第一步利用Create方法，创建实例（）
 let request = axios.create({
     //基础路径
-    baseURL: "http://172.22.44.62:8080/",//自动加上携带
+    baseURL: 'http://172.22.44.62:8080/',//"http://172.22.44.62:8080/",//"http://localhost:8080/",//自动加上携带
     timeout: 5000//超时时间
 });
 

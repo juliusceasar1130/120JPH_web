@@ -45,5 +45,5 @@ export interface HistoryVo {
     serialNumber: string,
     tunnel: string|number,
     historyDetailList?: historyDetail[]
-    partDefectCount?: string
+    partDefectCount?: Map<string,number>
 }

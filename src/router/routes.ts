@@ -133,6 +133,16 @@ export const constantRoute = [
                     icon: "Picture"
                 }
             },
+            {
+                path: '/product/spu',
+                component: () => import('@/views/product/eines/index.vue'),
+                name: 'Spu',
+                meta: {
+                    title: 'Eines',//菜单需要标题
+                    hidden: false,
+                    icon: "User"
+                }
+            },
             //面漆一线缺陷检测
             // {
             //     path: '/quality/topline1',
@@ -177,6 +187,50 @@ export const constantRoute = [
             //     }
             // },
         ]
+    },
+    {
+        path: '/cp',
+        component: () => import('@/layout/index.vue'),
+        name: 'ChangePoint',
+        meta: {
+            title: '变化点管理',//菜单需要标题
+            hidden: false,
+            icon: "User",
+        },
+        redirect: '/cp/cplayout',
+        children: [
+            {
+                path: '/cp/info',
+                component: () => import('@/views/changePoint/home/index.vue'),
+                name: 'info',
+                meta: {
+                    title: '变化点管理',//菜单需要标题
+                    hidden: false,
+                    icon: "UserFilled"
+                }
+            },
+            {
+                path: '/cp/trace',
+                component: () => import('@/views/changePoint/trace/index.vue'),
+                name: 'Trace',
+                meta: {
+                    title: '追溯',//菜单需要标题
+                    hidden: false,
+                    icon: "UserFilled"
+                }
+            },
+            {
+                path: '/cp/map',
+                component: () => import('@/views/changePoint/map/index.vue'),
+                name: 'Map',
+                meta: {
+                    title: '点位',//菜单需要标题
+                    hidden: false,
+                    icon: "UserFilled"
+                }
+            },
+        ]
+        
     },
 ]
 //异步路由
@@ -257,10 +311,10 @@ export const asyncRoute = [
         },
         {
             path: '/product/spu',
-            component: () => import('@/views/product/spu/index.vue'),
+            component: () => import('@/views/product/eines/index.vue'),
             name: 'Spu',
             meta: {
-                title: 'SPU管理',//菜单需要标题
+                title: 'Eines',//菜单需要标题
                 hidden: false,
                 icon: "User"
             }

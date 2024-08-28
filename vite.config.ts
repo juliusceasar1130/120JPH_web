@@ -41,7 +41,7 @@ export default defineConfig(({ command, mode }) => {
       proxy: {
         [env.VITE_APP_BASE_API]: {
           //获取服务器地址的设置
-          target: "http://172.22.44.62:8080/",
+          target: 'http://172.22.44.62:8080/',  //"http://172.22.44.62:8080/", //"http://localhost:8080/", //,
           //是否代理跨域？需要
           changeOrigin: true,
           //路径重写取消/API

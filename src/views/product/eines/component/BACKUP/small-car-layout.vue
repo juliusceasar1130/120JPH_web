@@ -57,7 +57,7 @@ const props = defineProps(['title'])
     width: 99.8%;
     height: 15vh;
 
-    background: rgb(164, 220, 241);
+    background: $base-defect-color;
 
     display: flex;
     align-items: center;
@@ -94,7 +94,7 @@ const props = defineProps(['title'])
       height: 100%;
       display: flex;
       text-align: center;
-      background-color:rgb(164, 220, 241);//$base-defect-color;
+      background: $base-defect-color;
       margin: 1px 1px;
       justify-content: center;
       border-radius: 5px;
@@ -104,7 +104,7 @@ const props = defineProps(['title'])
       height: 100%;
       display: flex;
       text-align: center;
-      background: rgb(164, 220, 241);
+      background: $base-defect-color;
       margin: 1px 1px;
       justify-content: center;
       flex-direction: column;

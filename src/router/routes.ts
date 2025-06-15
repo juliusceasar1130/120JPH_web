@@ -35,16 +35,16 @@ export const constantRoute = [
 
         ]
     },
-    {
-        path: '/screen',
-        component: () => import('@/views/screen/index.vue'),
-        name: 'Screen',
-        meta: {
-            title: '数据大屏',//菜单需要标题
-            hidden: false,
-            icon: "DataBoard"
-        }
-    },
+    // {
+    //     path: '/screen',
+    //     component: () => import('@/views/screen/index.vue'),
+    //     name: 'Screen',
+    //     meta: {
+    //         title: '数据大屏',//菜单需要标题
+    //         hidden: false,
+    //         icon: "DataBoard"
+    //     }
+    // },
 
     {
         //404
@@ -133,16 +133,7 @@ export const constantRoute = [
                     icon: "Picture"
                 }
             },
-            {
-                path: '/product/spu',
-                component: () => import('@/views/product/eines/index.vue'),
-                name: 'Spu',
-                meta: {
-                    title: 'Eines',//菜单需要标题
-                    hidden: false,
-                    icon: "User"
-                }
-            },
+        
             //面漆一线缺陷检测
             // {
             //     path: '/quality/topline1',
@@ -195,9 +186,9 @@ export const constantRoute = [
         meta: {
             title: '变化点管理',//菜单需要标题
             hidden: false,
-            icon: "User",
+            icon: "Warning",
         },
-        redirect: '/cp/cplayout',
+        redirect: '/cp/info',
         children: [
             {
                 path: '/cp/info',
@@ -206,7 +197,7 @@ export const constantRoute = [
                 meta: {
                     title: '变化点管理',//菜单需要标题
                     hidden: false,
-                    icon: "UserFilled"
+                    icon: "House"
                 }
             },
             {
@@ -216,7 +207,7 @@ export const constantRoute = [
                 meta: {
                     title: '追溯',//菜单需要标题
                     hidden: false,
-                    icon: "UserFilled"
+                    icon: "Message"
                 }
             },
             {
@@ -226,12 +217,82 @@ export const constantRoute = [
                 meta: {
                     title: '点位',//菜单需要标题
                     hidden: false,
-                    icon: "UserFilled"
+                    icon: "Tools"
                 }
             },
         ]
         
     },
+    {
+        path: '/data',
+        component: () => import('@/layout/index.vue'),
+        name: 'dataAnalyse',
+        meta: {
+            title: '数据分析',//菜单需要标题
+            hidden: false,
+            icon: "Monitor",
+        },
+        redirect: '/data/defectsAna',
+        children: [
+            {
+                path: '/data/defectsAna',
+                component: () => import('@/views/bigData/defectsAna/index.vue'),
+                name: 'defectsAna',
+                meta: {
+                    title: '缺陷数据分析',//菜单需要标题
+                    hidden: false,
+                    icon: "Monitor"
+                }
+            },
+            {
+                path: '/data/eines',
+                component: () => import('@/views/product/eines/index.vue'),
+                name: 'eines',
+                meta: {
+                    title: 'Eines',//菜单需要标题
+                    hidden: false,
+                    icon: "Stopwatch"
+                }
+            },              
+        ]
+        
+    },
+    {
+        path: '/bodytrack',
+        component: () => import('@/layout/index.vue'),
+        name: 'bodytrack',
+        meta: {
+            title: '项目车跟踪',//菜单需要标题
+            hidden: false,
+            icon: "Location",
+        },
+        redirect: '/bodytrack/home',
+        children: [
+            {
+                path: '/bodytrack/home',
+                component: () => import('@/views/bodytrack/home/index.vue'),
+                name: 'bodytrackhome',
+                meta: {
+                    title: 'Home',//菜单需要标题
+                    hidden: false,
+                    icon: "Guide"
+                }
+            },  
+            {
+                path: '/bodytrack/top',
+                component: () => import('@/views/bodytrack/top/index.vue'),
+                name: 'bodytracktop',
+                meta: {
+                    title: 'Top',//菜单需要标题
+                    hidden: false,
+                    icon: "Guide"
+                }
+            },
+                   
+        ]
+        
+    },
+
 ]
 //异步路由
 export const asyncRoute = [

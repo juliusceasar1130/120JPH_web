@@ -1,36 +1,27 @@
-<template>
-  <el-card style="margin: 0px 0px; background-color:whitesmoke; ">
-    <!---头:切换、时间-->
-    
-      <div class="header">
-        <div><el-radio-group v-model="lineSelect" size="large" @change="changeLine">
-            <el-radio v-for="(line, index) in transformedLines" :key="index" :label="index" size="large" border>
-              {{ line.label }}
-            </el-radio>
-          </el-radio-group></div>
-        <div class="time " style="font-family: Arial, sans-serif;">当前时间：{{ time }}</div>
-        
+<template >
+  <el-card style="margin: 0px 0px; ">
+    <el-row style="width: 100%">
+      <div
+        style="margin-top: 0px; display: flex; justify-content: space-between"
+      >
+        <el-radio-group v-model="lineSelect" size="large" @change="changeLine">
+          <el-radio
+            v-for="(line, index) in transformedLines"
+            :key="index"
+            :label="index"
+            size="large"
+            border
+          >
+            {{ line.label }}
+          </el-radio>
+        </el-radio-group>
+        <div class="time" style="font-family: Arial, sans-serif;">当前时间：{{ time }}</div>
       </div>
-    
-    <!--P1数据显示部分-->
-
-    <div v-loading="loadingx" class='statistic_card'>
-      <el-card class="statistic_style1">
-        <p class="text">最近洗喷杯</p>{{ last1.index.split(',')[0].replace('[', '')
-        }}
-      </el-card>
-      <el-card class="statistic_style11">
-        <p class="text">过车数量</p>{{ last1.cars }}
-      </el-card>
-      <el-card class="statistic_style2">
-        <p class="text">上次过车数量</p>{{ last2.cars }}
-      </el-card>
-      <el-card class="statistic_style2">
-        <p class="text">上次平均缺陷</p>{{ last2.Defect_Count }}
-      </el-card>
-    </div>
-    <!-- *****最近三台****** -->
-    <el-row>
+    </el-row>
+    <!-- ************************ -->
+    <hr />
+    <!-- *****n****** -->
+    <el-row >
       <el-col :span="8">
         <div class="grid-content">
           <p class="LatestUnit">最新第1台</p>
@@ -45,9 +36,9 @@
           </el-tag>
           <!-- <el-tag size="large" class='CarTimesColor'>
             雪橇号：{{'1234' }}
-          </el-tag> -->
+          </el-tag> -->        
           <p class="CarTimesColor">{{ positionLast1?.dateTime }}</p>
-          <p class="TextStyle">总缺陷: {{ positionLast1?.defectCount }}</p>
+          <p class="TextStyle">总缺陷:     {{ positionLast1?.defectCount }}</p>
         </div>
       </el-col>
       <el-col :span="8">
@@ -65,8 +56,8 @@
           <!-- <el-tag size="large" class='CarTimesColor'>
             雪橇号：{{'1234' }}
           </el-tag> -->
-          <p class="CarTimesColor">{{ positionLast2?.dateTime }}</p>
-          <p class="TextStyle">总缺陷: {{ positionLast2?.defectCount }}</p>
+          <p class="CarTimesColor">{{ positionLast2?.dateTime }}</p>          
+          <p class="TextStyle">总缺陷:     {{ positionLast2?.defectCount }}</p>
         </div>
       </el-col>
       <el-col :span="8">
@@ -78,19 +69,18 @@
           <el-tag size="large" class="CarTimesColor">
             颜色： {{ positionLast3?.colorCode }}
           </el-tag>
-          <el-tag size="large" class="CarTimesColor">
+          <el-tag size="large" class="CarTimesColor" >
             车身号：{{ positionLast3?.serialNumber }}
           </el-tag>
           <!-- <el-tag size="large" class='CarTimesColor'>
             雪橇号：{{'1234' }}
-          </el-tag> -->
-          <p class="CarTimesColor">{{ positionLast3?.dateTime }}</p>
-          <p class="TextStyle">总缺陷: {{ positionLast3?.defectCount }}</p>
+          </el-tag> -->         
+          <p class="CarTimesColor">{{ positionLast3?.dateTime }}</p>         
+          <p class="TextStyle">总缺陷:     {{ positionLast3?.defectCount }}</p>
         </div>
       </el-col>
     </el-row>
 
-    <!--三个图片-->
     <el-row style="width: 100%; align-content: space-between">
       <el-col :span="8" style="border-radius: 10px">
         <div>
@@ -113,7 +103,12 @@
     </el-row>
   </el-card>
 
-  <el-dialog v-model="dialogVisible" title="缺陷检测示意图" style="width: 80%; height: 80%" draggable>
+  <el-dialog
+    v-model="dialogVisible"
+    title="缺陷检测示意图"
+    style="width: 80%; height: 80%"
+    draggable
+  >
     <!-- <div><el-tag style="margin: 5px 5px">序号：{{123 }}</el-tag>
           <el-tag style="margin: 5px 5px">
             雪橇号：{{456 }}
@@ -125,7 +120,10 @@
     <div class="box-top">
       <div class="box-top-1">
         <div>
-          <img src="./carlayout/tailgate.png" alt="" style="
+          <img
+            src="./carlayout/tailgate.png"
+            alt=""
+            style="
               position: absolute;
               top: 30%; /* 垂直居中 */
               left: 30%; /* 水平居中 */
@@ -133,7 +131,8 @@
               width: 20vw; /* 图片宽度 */
               height: 35vh; /* 图片高度 */
               margin: 2px 2px;
-            " />
+            "
+          />
           <div class="box-top-1-L">
             <div class="chl_box">
               <span>part:13</span>
@@ -146,7 +145,10 @@
       </div>
       <div class="box-top-1">
         <div>
-          <img src="./carlayout/roof.png" alt="" style="
+          <img
+            src="./carlayout/roof.png"
+            alt=""
+            style="
               position: absolute;
               top: 30%; /* 垂直居中 */
               left: 50%; /* 水平居中 */
@@ -154,7 +156,8 @@
               width: 15vw; /* 图片宽度 */
               height: 20vh; /* 图片高度 */
               margin: 2px 2px;
-            " />
+            "
+          />
           <div class="box-top-1-M">
             <div class="chl_box">
               <span>part:11</span>
@@ -167,7 +170,10 @@
       </div>
       <div class="box-top-1">
         <div>
-          <img src="./carlayout/hood.png" alt="" style="
+          <img
+            src="./carlayout/hood.png"
+            alt=""
+            style="
               position: absolute;
               top: 30%; /* 垂直居中 */
               right: 15%; /* 水平居中 */
@@ -175,7 +181,8 @@
               width: 11vw; /* 图片宽度 */
               height: 30vh; /* 图片高度 */
               margin: 2px 2px;
-            " />
+            "
+          />
           <div class="box-top-1-R">
             <div class="chl_box">
               <span>part:12</span>
@@ -191,7 +198,10 @@
     <div class="box-bottom">
       <div class="box-top-2">
         <div>
-          <img src="./carlayout/left.png" alt="" style="
+          <img
+            src="./carlayout/left.png"
+            alt=""
+            style="
               position: absolute;
               top: 65%; /* 垂直居中 */
               left: 30%; /* 水平居中 */
@@ -199,7 +209,8 @@
               width: 28vw; /* 图片宽度 */
               height: 20vh; /* 图片高度 */
               margin: 2px 2px;
-            " />
+            "
+          />
 
           <div class="part-10">
             <div class="part-10-1">
@@ -235,7 +246,10 @@
       </div>
       <div class="box-top-2">
         <div>
-          <img src="./carlayout/right.png" alt="" style="
+          <img
+            src="./carlayout/right.png"
+            alt=""
+            style="
               position: absolute;
               top: 65%; /* 垂直居中 */
               right: -4%; /* 水平居中 */
@@ -243,7 +257,8 @@
               width: 28vw; /* 图片宽度 */
               height: 21vh; /* 图片高度 */
               margin: 2px 2px;
-            " />
+            "
+          />
           <div class="part-5">
             <div class="part-5-1">
               <span>part:5</span>
@@ -288,25 +303,10 @@
 </template>
 <script setup lang="ts">
 import SmallCarLayout from './small-car-layout.vue'
-import { ref, onMounted, computed, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { reqEineshistoryVoLastN } from '@/api/eines/index'
 import type { HistoryVo } from '@/api/eines/type'
 import moment from 'moment'
-import { ElMessage } from 'element-plus'
-import { reqstaticticsInfo } from '@/api/dataAna/index'
-let loadingx = ref(false)
-//最后一台
-let last1 = ref({
-  "Defect_Count": '',
-  "cars": "",
-  "index": ""
-})
-//最后第二胎
-let last2 = ref({
-  "Defect_Count": '',
-  "cars": "",
-  "index": ""
-})
 
 //新增的数据传给三个图形内的数字
 //左侧、右侧、后盖、车顶、前盖
@@ -319,11 +319,7 @@ let recordsLastN = ref<HistoryVo[]>([])
 // 定义响应式数据 lineSelect
 const lineSelect = ref(0)
 //存储当前时间
-let time = ref(moment().format('YYYY年MM月DD日 HH:mm:ss'))
-//用于统计数据获取
-let time2_end = ref(moment().format('YYYY-MM-DD HH:mm:ss'))
-let time2_begin = ref(moment().format('YYYY-MM-DD HH:mm:ss'))
-//显示用
+let time = ref(moment().format('YYYY年MM月DD日 hh:mm:ss'))
 let timer = ref(0)
 //保存选择的条线.默认一线
 let lineMemo = ref(1)
@@ -341,7 +337,6 @@ const changeLine = (value: any) => {
   lineMemo.value = value + 1
   //values:0,1,2
   lastRecord(4, value + 1)
-  GetreqstaticticsInfo(lineMemo.value, time2_begin.value, time2_end.value)
 }
 // 获取最新2条记录
 // 转换 Lines 数组为 el-radio 所需要的数据结构
@@ -349,26 +344,17 @@ const transformedLines = computed(() => {
   return Lines.map((line) => ({ value: line[0], label: line[1] }))
 })
 
-
 onMounted(() => {
   lastRecord(4, 1)
-
   //时间显示
   timer.value = setInterval(() => {
     time.value = moment().format('YYYY年MM月DD日 HH:mm:ss')
-    time2_end.value = moment().format('YYYY-MM-DDTHH:mm:ss')
-    let begin = moment()
-    let end = begin.add(-1, 'days')
-    time2_begin.value = end.format('YYYY-MM-DDTHH:mm:ss')
-
   }, 1000)
-
   //更新最新数据
   setInterval(() => {
     lastRecord(4, lineMemo.value)
-    GetreqstaticticsInfo(lineMemo.value, time2_begin.value, time2_end.value)
     console.log('定时器刷新')
-  }, 60000)
+  }, 30000)
 })
 // 销毁定时器
 onBeforeUnmount(() => {
@@ -425,7 +411,7 @@ const calDefectNumforStation = (list: any) => {
 
   //转List
   let allValues = Array.from(partMap.values())
-  return allValues
+   return allValues
 }
 
 //配置线
@@ -469,38 +455,6 @@ const modelMap = (num: any) => {
 
 /* ***********dialog */
 const dialogVisible = ref(false)
-
-//统计
-const GetreqstaticticsInfo = async (
-  line: any,
-  time_begin: any,
-  time_end: any,
-) => {
-  loadingx.value = true
-  //清空数据
-  Object.assign(last1.value, {
-    "Defect_Count": '',
-    "cars": "",
-    "index": ""
-  })
-  Object.assign(last2.value, {
-    "Defect_Count": '',
-    "cars": "",
-    "index": ""
-  })
-  let result = await reqstaticticsInfo(line, time_begin, time_end)
-  if (result.code == 200) {
-    Object.assign(last1.value, result.data.last1)
-    Object.assign(last2.value, result.data.last2)
-    loadingx.value = false
-  } else {
-    ElMessage({
-      type: 'error',
-      message: '更新失败或连接错误',
-    })
-  }
-}
-
 </script>
 <style lang="scss" scoped>
 .carlayout {
@@ -806,16 +760,14 @@ const GetreqstaticticsInfo = async (
     font-weight: bold;
   }
 }
-
 //缺陷是、总数量的样式
 .TextStyle {
   color: #fc4a1a;
-  font-size: 5vh;
+  font-size: 6vh;
   font-weight: bold;
   margin: 5px 0px;
   font-family: Arial, sans-serif;
 }
-
 //车型一行的文字样式
 .TextCarLineStyle {
   color: #373737;
@@ -824,7 +776,6 @@ const GetreqstaticticsInfo = async (
   margin: 5px 0px;
   font-family: Arial, sans-serif;
 }
-
 //车身号，颜色，时间
 .CarTimesColor {
   margin: 5px 0px;
@@ -841,72 +792,12 @@ const GetreqstaticticsInfo = async (
   color: #0000007c;
   font-weight: bold;
 }
-
 //顶部时间的样式
 .time {
-  font-size: 3vh;
-  font-family: Arial, sans-serif;
-  color: #0000007c;
-  // margin-left: 2vw;
-  font-weight: bold;
-}
-
-//统计图表的样式
-.statistic_style1 {
-  font-family: Arial, sans-serif;
   font-size: 4vh;
-  width: 24.9%;
-  margin: 5px 0px;
-  color: #0a38b8c7;
-  font-weight: bold;
-  background-color: aliceblue;
-  margin: 15px;
-
-  .text {
-    font-size: 2vh;
-  }
-}
-
-.statistic_style11 {
   font-family: Arial, sans-serif;
-  font-size: 5vh;
-  width: 24.9%;
-  margin: 5px 0px;
   color: #0a38b8c7;
+  margin-left: 5vw;
   font-weight: bold;
-  background-color: aliceblue;
-  margin: 15px;
-
-  .text {
-    font-size: 2vh;
-  }
-}
-
-.statistic_style2 {
-  font-family: Arial, sans-serif;
-  font-size: 5vh;
-  width: 24.9%;
-  margin: 5px 0px;
-  color: #0a38b8c7;
-  font-weight: bold;
-  background-color: mistyrose;
-  margin: 15px;
-
-  .text {
-    font-size: 2vh;
-  }
-}
-
-.statistic_card {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  //gap: 10px;
-}
-.header{
-  display: flex; 
-  //flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
 }
 </style>

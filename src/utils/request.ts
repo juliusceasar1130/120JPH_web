@@ -6,8 +6,9 @@ import useUserStore from '@/store/modules/user'
 //第一步利用Create方法，创建实例（）
 let request = axios.create({
     //基础路径
-    baseURL: 'http://172.22.44.62:8080/',//"http://172.22.44.62:8080/",//"http://localhost:8080/",//自动加上携带
-    timeout: 5000//超时时间
+    baseURL:'http://172.22.44.99:8080/',//'http://172.22.50.53:8080'
+    //'http://localhost:8080/', "http://172.22.44.62:8080/",//"http://localhost:8080/",//自动加上携带
+    timeout: 50000//超时时间
 });
 
 //第二步：request实例添加请求和拦截器,有两个拦截器，使用第一个

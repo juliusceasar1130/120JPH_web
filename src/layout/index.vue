@@ -25,7 +25,7 @@
     <!--顶部导航-->
     <div class="layout_tabbar" :class="{ fold: LayOutSettingStore.fold ? true : false }"
     >
-      <Tabbar></Tabbar>
+      <Tabbar>1111</Tabbar>
     </div>
     <!--内容展示区-->
     <div class="layout_main" :class="{ fold: LayOutSettingStore.fold ? true : false }"    >

@@ -10,6 +10,7 @@ let useTraceStore = defineStore('Trace', {
                 line: '',
                 startTime: '',
                 endTime: '',
+                priority: 0,
             },
             cpResult: [],
 

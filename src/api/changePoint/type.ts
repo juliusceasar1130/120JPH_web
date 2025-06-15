@@ -49,7 +49,8 @@ export interface query {
     "areaCh": string,
     "line": string,
     "startTime": string,
-    "endTime": string
+    "endTime": string,
+    "priority":number
 }
 export interface cpResult {
     areaCh:string,

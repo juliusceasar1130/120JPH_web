@@ -7,8 +7,11 @@
         <el-select v-model="areaChSelect" clearable placeholder="选择区域" @change="areaChSelectChange" style="width: 100px;margin-right: 10px;">
           <el-option v-for="item in areaChOptions" :key="item" :label="item.lable" :value="item.value" />
         </el-select>
-        <el-select v-model="lineSelect" clearable placeholder="选择条线" @change="lineSelectChange" style="width: 100px;">
+        <el-select v-model="lineSelect" clearable placeholder="选择条线" @change="lineSelectChange" style="width: 100px;margin-right: 10px;">
           <el-option v-for="item in lineOptions" :key="item" :label="item.lable" :value="item.value" />
+        </el-select>
+        <el-select v-model="prioritySelect" clearable placeholder="选择优先级" @change="priorityChange" style="width: 100px;">
+          <el-option v-for="(label, index) in priorityOptions" :key="index" :label="label" :value="index" />
         </el-select>
       </el-form-item>
       <!-- 时间 -->
@@ -56,6 +59,8 @@
         <el-table-column label="名称" align="center" prop="nameParameter" ></el-table-column>
         <!-- 类型列 -->
         <el-table-column label="点位" align="center"  prop="ioitem" fit></el-table-column>
+           <!-- 类型列 -->
+           <el-table-column label="优先级" align="center" width="90px" prop="spare2" fit></el-table-column>
         <!-- 旧值列 -->
         <el-table-column label="旧值" align="center" width="55x" prop="oldValue"></el-table-column>
         <!-- 新值列 -->
@@ -109,6 +114,7 @@ import { ref, onMounted, reactive, onBeforeUnmount, watch } from 'vue'
 import moment from 'moment'
 import useTraceStore from '@/views/changePoint/store/trace.ts'
 import CheckCharts from '../echarts/index.vue'
+//import { tr } from 'element-plus/es/locales.mjs'
 
 
 
@@ -124,6 +130,7 @@ let query = reactive<query>({
   line: '',
   startTime: '',
   endTime: '',
+  priority: 3,
 })
 
 let areaChSelect = ref('')
@@ -136,6 +143,8 @@ let valueList = ref<number[]>([])
 let nameParameter = ref()
 let ioitem = ref()
 let nameList=ref()
+let priorityOptions = ['一级', '二级', '三级', '全部']
+let prioritySelect = ref(3)
 
 const close = () => {
   dialogVisible.value = false // 关闭弹窗
@@ -162,9 +171,11 @@ const shortcuts = [
 onMounted(() => {
   GetAreaAndLine()
   if (traceStore.query.areaCh) {
+    //存在筛选数据
     Object.assign(query, traceStore.query)
     areaChSelect.value = traceStore.query.areaCh
     lineSelect.value = traceStore.query.line
+    prioritySelect.value=traceStore.query.priority
     dateTimepickUp.value = [query.startTime, query.endTime]
     CPDataVoByQuery()
   } else {
@@ -253,6 +264,9 @@ const areaChSelectChange = () => {
 
 const lineSelectChange = () => {
   query.line = lineSelect.value
+}
+const priorityChange=()=>{
+  query.priority = prioritySelect.value
 }
 
 const dialogOpen = async (row: any) => {

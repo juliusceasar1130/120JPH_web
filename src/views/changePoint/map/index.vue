@@ -33,6 +33,8 @@
          <el-table-column label="参数名" align="center"   prop="nameParameter"></el-table-column>
         <!-- 区域列 -->
         <el-table-column label="点位" align="center"  prop="ioitem"></el-table-column>
+        <!-- 区域列 -->
+        <el-table-column label="优先级" align="center"  prop="spare2" width="80px"></el-table-column>
         <!-- 设备列 -->
         <el-table-column label="区域(英)" align="center" width="80px" prop="areaEn"></el-table-column>
         <!-- 条线列 -->
@@ -114,7 +116,8 @@ let query=reactive<query>({
     areaCh:'',
     line:"",
     startTime: '2020-01-01',
-    endTime: '2028-01-01'   
+    endTime: '2028-01-01',
+    priority: 3   
 })
 let keyWord=ref('')
 

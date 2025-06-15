@@ -12,9 +12,10 @@
       @click="FullScreen"
     ></el-button>
     <el-button size="small" circle icon="Setting"></el-button>
-    <img
-      :src="useStore.avatar"
-      alt=""
+     <!-- :src="useStore.avatar" -->
+    <img     
+      src="@/assets/images/avator.png"
+      alt="@/assets/images/avator.png"
       style="width: 24px; height: 24px; margin: 0px 10px; border-radius: 50%"
       v-if="flagReflesh"
     />

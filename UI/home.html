@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪橇一览表</title>
+    <!-- 引入Element Plus样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        .clean-status-c {
+            color: #67C23A;
+            font-weight: bold;
+        }
+        .clean-status-m {
+            color: #E6A23C;
+            font-weight: bold;
+        }
+        .clean-status-s {
+            color: #F56C6C;
+            font-weight: bold;
+        }
+        .status-online {
+            color: #67C23A;
+        }
+        .status-offline {
+            color: #909399;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="mb-4">
+            <h1 class="text-xl font-bold text-gray-800 mb-2">雪橇一览表</h1>
+            <p class="text-gray-500 text-sm">展示所有雪橇的最新清洁度检测状态与上下线情况</p>
+        </div>
+
+        <!-- 筛选条件 -->
+        <el-card class="mb-4">
+            <div class="flex flex-wrap gap-4">
+                <el-input 
+                    placeholder="雪橇编号" 
+                    v-model="filters.skidId" 
+                    class="w-48"
+                    clearable>
+                </el-input>
+                
+                <el-select 
+                    placeholder="清洁度状态" 
+                    v-model="filters.cleanStatus" 
+                    class="w-48"
+                    clearable>
+                    <el-option label="清洁 (C)" value="C"></el-option>
+                    <el-option label="中度 (M)" value="M"></el-option>
+                    <el-option label="严重 (S)" value="S"></el-option>
+                </el-select>
+                
+                <el-select 
+                    placeholder="上下线状态" 
+                    v-model="filters.onlineStatus" 
+                    class="w-48"
+                    clearable>
+                    <el-option label="在线" value="online"></el-option>
+                    <el-option label="离线" value="offline"></el-option>
+                </el-select>
+                
+                <el-date-picker
+                    v-model="filters.inspectionTimeRange"
+                    type="datetimerange"
+                    range-separator="至"
+                    start-placeholder="检测开始时间"
+                    end-placeholder="检测结束时间"
+                    class="w-96"
+                    clearable>
+                </el-date-picker>
+                
+                <el-date-picker
+                    v-model="filters.statusChangeTimeRange"
+                    type="datetimerange"
+                    range-separator="至"
+                    start-placeholder="状态变更开始时间"
+                    end-placeholder="状态变更结束时间"
+                    class="w-96"
+                    clearable>
+                </el-date-picker>
+            </div>
+            <div class="flex justify-end mt-4">
+                <el-button type="primary" @click="searchData">搜索</el-button>
+                <el-button @click="resetFilters">重置</el-button>
+            </div>
+        </el-card>
+
+        <!-- 数据表格 -->
+        <el-table
+            :data="skidList"
+            border
+            stripe
+            style="width: 100%"
+            :default-sort="{ prop: 'skidId', order: 'ascending' }">
+            <el-table-column prop="skidId" label="雪橇编号" sortable width="120"></el-table-column>
+            <el-table-column prop="cleanStatus" label="清洁度状态" sortable width="120">
+                <template #default="scope">
+                    <span :class="{
+                        'clean-status-c': scope.row.cleanStatus === 'C',
+                        'clean-status-m': scope.row.cleanStatus === 'M',
+                        'clean-status-s': scope.row.cleanStatus === 'S'
+                    }">
+                        {{ scope.row.cleanStatus === 'C' ? '清洁 (C)' : 
+                           scope.row.cleanStatus === 'M' ? '中度 (M)' : 
+                           scope.row.cleanStatus === 'S' ? '严重 (S)' : '未知' }}
+                    </span>
+                </template>
+            </el-table-column>
+            <el-table-column prop="inspectionTime" label="检测时间" sortable width="180"></el-table-column>
+            <el-table-column prop="onlineStatus" label="上下线状态" sortable width="120">
+                <template #default="scope">
+                    <el-tag :type="scope.row.onlineStatus === 'online' ? 'success' : 'info'" size="small">
+                        {{ scope.row.onlineStatus === 'online' ? '在线' : '离线' }}
+                    </el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="statusChangeTime" label="上下线时间" sortable width="180"></el-table-column>
+            <el-table-column prop="remarks" label="备注" min-width="120"></el-table-column>
+            <el-table-column label="操作" fixed="right" width="220">
+                <template #default="scope">
+                    <el-button 
+                        type="primary" 
+                        size="small" 
+                        @click="viewCleanHistory(scope.row.skidId)">
+                        清洁历史
+                    </el-button>
+                    <el-button 
+                        type="info" 
+                        size="small" 
+                        @click="viewStatusHistory(scope.row.skidId)">
+                        上下线历史
+                    </el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <!-- 分页 -->
+        <div class="flex justify-end mt-4">
+            <el-pagination
+                background
+                layout="total, sizes, prev, pager, next"
+                :total="100"
+                :page-sizes="[10, 20, 50, 100]"
+                :page-size="10"
+                :current-page="currentPage"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange">
+            </el-pagination>
+        </div>
+    </div>
+
+    <!-- 引入Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入Element Plus -->
+    <script src="https://unpkg.com/element-plus@2.10.4/dist/index.full.js"></script>
+    <script>
+        const { createApp, ref, reactive } = Vue;
+        
+        createApp({
+            setup() {
+                const currentPage = ref(1);
+                const filters = reactive({
+                    skidId: '',
+                    cleanStatus: '',
+                    onlineStatus: '',
+                    inspectionTimeRange: [],
+                    statusChangeTimeRange: []
+                });
+                
+                // 模拟数据
+                const skidList = ref([
+                    { 
+                        skidId: 'SK001', 
+                        cleanStatus: 'C', 
+                        inspectionTime: '2024-05-15 08:30:25', 
+                        onlineStatus: 'online', 
+                        statusChangeTime: '2024-05-15 08:30:00',
+                        remarks: '正常运行'
+                    },
+                    { 
+                        skidId: 'SK002', 
+                        cleanStatus: 'M', 
+                        inspectionTime: '2024-05-15 09:15:32', 
+                        onlineStatus: 'online', 
+                        statusChangeTime: '2024-05-14 14:22:10',
+                        remarks: '需要定期清洁'
+                    },
+                    { 
+                        skidId: 'SK003', 
+                        cleanStatus: 'S', 
+                        inspectionTime: '2024-05-15 07:45:18', 
+                        onlineStatus: 'offline', 
+                        statusChangeTime: '2024-05-15 08:00:45',
+                        remarks: '需要立即清洁'
+                    },
+                    { 
+                        skidId: 'SK004', 
+                        cleanStatus: 'C', 
+                        inspectionTime: '2024-05-14 16:20:07', 
+                        onlineStatus: 'online', 
+                        statusChangeTime: '2024-05-14 16:25:30',
+                        remarks: ''
+                    },
+                    { 
+                        skidId: 'SK005', 
+                        cleanStatus: 'M', 
+                        inspectionTime: '2024-05-15 10:05:22', 
+                        onlineStatus: 'online', 
+                        statusChangeTime: '2024-05-13 09:30:15',
+                        remarks: '计划下周清洁'
+                    },
+                    { 
+                        skidId: 'SK006', 
+                        cleanStatus: 'C', 
+                        inspectionTime: '2024-05-14 14:50:39', 
+                        onlineStatus: 'online', 
+                        statusChangeTime: '2024-05-14 08:15:00',
+                        remarks: ''
+                    },
+                    { 
+                        skidId: 'SK007', 
+                        cleanStatus: 'S', 
+                        inspectionTime: '2024-05-15 11:25:10', 
+                        onlineStatus: 'offline', 
+                        statusChangeTime: '2024-05-15 11:30:25',
+                        remarks: '紧急维护中'
+                    }
+                ]);
+                
+                // 查询数据
+                const searchData = () => {
+                    // 此处实现查询逻辑
+                    console.log('搜索条件:', filters);
+                    // 实际应用中会根据筛选条件查询数据
+                };
+                
+                // 重置筛选条件
+                const resetFilters = () => {
+                    filters.skidId = '';
+                    filters.cleanStatus = '';
+                    filters.onlineStatus = '';
+                    filters.inspectionTimeRange = [];
+                    filters.statusChangeTimeRange = [];
+                };
+                
+                // 查看清洁历史
+                const viewCleanHistory = (skidId) => {
+                    window.parent.location.href = `history-clean.html?skidId=${skidId}`;
+                };
+                
+                // 查看上下线历史
+                const viewStatusHistory = (skidId) => {
+                    window.parent.location.href = `history-status.html?skidId=${skidId}`;
+                };
+                
+                // 分页相关方法
+                const handleSizeChange = (size) => {
+                    console.log('每页显示条数:', size);
+                    // 实际应用中更新分页数据
+                };
+                
+                const handleCurrentChange = (page) => {
+                    console.log('当前页:', page);
+                    currentPage.value = page;
+                    // 实际应用中更新分页数据
+                };
+                
+                return {
+                    currentPage,
+                    filters,
+                    skidList,
+                    searchData,
+                    resetFilters,
+                    viewCleanHistory,
+                    viewStatusHistory,
+                    handleSizeChange,
+                    handleCurrentChange
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html> 

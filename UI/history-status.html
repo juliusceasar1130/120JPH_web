@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪橇上下线历史记录</title>
+    <!-- 引入Element Plus样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        .status-online {
+            color: #67C23A;
+            font-weight: bold;
+        }
+        .status-offline {
+            color: #909399;
+            font-weight: bold;
+        }
+        .echarts-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 28px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--dot-color, #409EFF);
+        }
+        .timeline-online::before {
+            --dot-color: #67C23A;
+        }
+        .timeline-offline::before {
+            --dot-color: #909399;
+        }
+        .timeline-line {
+            position: absolute;
+            left: 5px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #EBEEF5;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800 mb-2">雪橇上下线历史记录</h1>
+                <p class="text-gray-500 text-sm">雪橇编号：{{ skidId }}</p>
+            </div>
+            <el-button @click="backToHome" type="primary" plain>返回雪橇一览表</el-button>
+        </div>
+
+        <!-- 筛选条件 -->
+        <el-card class="mb-4">
+            <div class="flex flex-wrap gap-4">
+                <el-select 
+                    placeholder="上下线状态" 
+                    v-model="filters.onlineStatus" 
+                    class="w-48"
+                    clearable>
+                    <el-option label="在线" value="online"></el-option>
+                    <el-option label="离线" value="offline"></el-option>
+                </el-select>
+                
+                <el-date-picker
+                    v-model="filters.timeRange"
+                    type="datetimerange"
+                    range-separator="至"
+                    start-placeholder="开始时间"
+                    end-placeholder="结束时间"
+                    class="w-96"
+                    clearable>
+                </el-date-picker>
+            </div>
+            <div class="flex justify-end mt-4">
+                <el-button type="primary" @click="searchData">搜索</el-button>
+                <el-button @click="resetFilters">重置</el-button>
+            </div>
+        </el-card>
+
+        <!-- 运行状态概览 -->
+        <el-card class="mb-4">
+            <template #header>
+                <div class="flex justify-between items-center">
+                    <span>运行状态概览</span>
+                    <el-radio-group v-model="chartTimeRange" size="small">
+                        <el-radio-button label="week">最近一周</el-radio-button>
+                        <el-radio-button label="month">最近一个月</el-radio-button>
+                        <el-radio-button label="year">最近一年</el-radio-button>
+                    </el-radio-group>
+                </div>
+            </template>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-gray-500 text-sm mb-2">上线时长</h3>
+                    <div class="flex items-end">
+                        <span class="text-2xl font-bold text-gray-800">156</span>
+                        <span class="ml-2 text-gray-500">小时</span>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-gray-500 text-sm mb-2">上线率</h3>
+                    <div class="flex items-end">
+                        <span class="text-2xl font-bold text-green-600">92.5%</span>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-gray-500 text-sm mb-2">平均连续运行时间</h3>
+                    <div class="flex items-end">
+                        <span class="text-2xl font-bold text-gray-800">26</span>
+                        <span class="ml-2 text-gray-500">小时</span>
+                    </div>
+                </div>
+            </div>
+            <div class="echarts-container" ref="chartContainer"></div>
+        </el-card>
+
+        <!-- 数据表格 -->
+        <el-table
+            :data="historyList"
+            border
+            stripe
+            style="width: 100%"
+            :default-sort="{ prop: 'statusChangeTime', order: 'descending' }">
+            <el-table-column prop="statusChangeTime" label="状态变更时间" sortable width="180"></el-table-column>
+            <el-table-column prop="onlineStatus" label="上下线状态" sortable width="120">
+                <template #default="scope">
+                    <el-tag :type="scope.row.onlineStatus === 'online' ? 'success' : 'info'" size="small">
+                        {{ scope.row.onlineStatus === 'online' ? '在线' : '离线' }}
+                    </el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="operator" label="操作人员" width="120"></el-table-column>
+            <el-table-column prop="duration" label="持续时间" width="120"></el-table-column>
+            <el-table-column prop="reason" label="原因" min-width="200"></el-table-column>
+        </el-table>
+
+        <!-- 分页 -->
+        <div class="flex justify-end mt-4">
+            <el-pagination
+                background
+                layout="total, sizes, prev, pager, next"
+                :total="100"
+                :page-sizes="[10, 20, 50, 100]"
+                :page-size="10"
+                :current-page="currentPage"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange">
+            </el-pagination>
+        </div>
+
+        <!-- 时间线视图 -->
+        <el-card class="mt-6">
+            <template #header>
+                <div class="flex justify-between items-center">
+                    <span>时间线视图</span>
+                </div>
+            </template>
+            <div class="relative py-4">
+                <div class="timeline-line"></div>
+                <div v-for="(item, index) in historyList" :key="index" class="mb-6">
+                    <div :class="['timeline-item', item.onlineStatus === 'online' ? 'timeline-online' : 'timeline-offline']">
+                        <div class="mb-1">
+                            <span class="font-bold" :class="{'status-online': item.onlineStatus === 'online', 'status-offline': item.onlineStatus === 'offline'}">
+                                {{ item.onlineStatus === 'online' ? '上线' : '下线' }}
+                            </span>
+                            <span class="ml-2 text-gray-500">{{ item.statusChangeTime }}</span>
+                        </div>
+                        <div class="text-sm text-gray-600">{{ item.reason }}</div>
+                        <div class="text-xs text-gray-500 mt-1">操作人员: {{ item.operator }} | 持续时间: {{ item.duration }}</div>
+                    </div>
+                </div>
+            </div>
+        </el-card>
+    </div>
+
+    <!-- 引入Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入Element Plus -->
+    <script src="https://unpkg.com/element-plus@2.10.4/dist/index.full.js"></script>
+    <!-- 引入ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, onMounted, nextTick } = Vue;
+        
+        createApp({
+            setup() {
+                const currentPage = ref(1);
+                const skidId = ref('');
+                const filters = reactive({
+                    onlineStatus: '',
+                    timeRange: []
+                });
+                const chartTimeRange = ref('month');
+                const chartContainer = ref(null);
+                let chart = null;
+                
+                // 解析URL参数
+                onMounted(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const id = urlParams.get('skidId');
+                    if (id) {
+                        skidId.value = id;
+                        // 加载数据
+                        loadHistoryData();
+                    }
+                    
+                    // 初始化图表
+                    nextTick(() => {
+                        initChart();
+                    });
+                });
+                
+                // 初始化趋势图
+                const initChart = () => {
+                    if (chartContainer.value) {
+                        chart = echarts.init(chartContainer.value);
+                        updateChart();
+                        
+                        // 监听窗口大小变化，重置图表大小
+                        window.addEventListener('resize', () => {
+                            chart.resize();
+                        });
+                    }
+                };
+                
+                // 更新趋势图数据
+                const updateChart = () => {
+                    // 模拟运行状态数据
+                    const dates = [];
+                    const statusData = [];
+                    const today = new Date();
+                    
+                    // 根据选择的时间范围生成日期和数据
+                    let days = 30; // 默认一个月
+                    if (chartTimeRange.value === 'week') {
+                        days = 7;
+                    } else if (chartTimeRange.value === 'year') {
+                        days = 365;
+                    }
+                    
+                    for (let i = days; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(today.getDate() - i);
+                        dates.push(date.toISOString().split('T')[0]);
+                        
+                        // 模拟状态数据（随机生成，1代表在线，0代表离线）
+                        // 让在线概率为90%，模拟较高的上线率
+                        statusData.push(Math.random() < 0.9 ? 1 : 0);
+                    }
+                    
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: function(params) {
+                                const status = params[0].value === 1 ? '在线' : '离线';
+                                return `${params[0].axisValue}<br/>状态: ${status}`;
+                            }
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: dates,
+                            axisLabel: {
+                                rotate: 45,
+                                interval: Math.ceil(dates.length / 10)
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            min: -0.1,
+                            max: 1.1,
+                            interval: 1,
+                            axisLabel: {
+                                formatter: function (value) {
+                                    return value === 0 ? '离线' : value === 1 ? '在线' : '';
+                                }
+                            }
+                        },
+                        series: [
+                            {
+                                data: statusData,
+                                type: 'line',
+                                step: 'end',
+                                itemStyle: {
+                                    color: function(params) {
+                                        return params.value === 1 ? '#67C23A' : '#909399';
+                                    }
+                                },
+                                areaStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0,
+                                        y: 0,
+                                        x2: 0,
+                                        y2: 1,
+                                        colorStops: [{
+                                            offset: 0,
+                                            color: 'rgba(103, 194, 58, 0.2)'
+                                        }, {
+                                            offset: 1,
+                                            color: 'rgba(103, 194, 58, 0)'
+                                        }]
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    
+                    chart.setOption(option);
+                };
+                
+                // 模拟历史数据
+                const historyList = ref([
+                    {
+                        statusChangeTime: '2024-05-15 08:30:00',
+                        onlineStatus: 'online',
+                        operator: '张三',
+                        duration: '16小时25分',
+                        reason: '例行上线'
+                    },
+                    {
+                        statusChangeTime: '2024-05-14 16:05:00',
+                        onlineStatus: 'offline',
+                        operator: '李四',
+                        duration: '8小时10分',
+                        reason: '设备检修'
+                    },
+                    {
+                        statusChangeTime: '2024-05-14 07:55:00',
+                        onlineStatus: 'online',
+                        operator: '王五',
+                        duration: '32小时30分',
+                        reason: '恢复生产'
+                    },
+                    {
+                        statusChangeTime: '2024-05-12 23:25:00',
+                        onlineStatus: 'offline',
+                        operator: '张三',
+                        duration: '4小时35分',
+                        reason: '设备清洗'
+                    },
+                    {
+                        statusChangeTime: '2024-05-12 18:50:00',
+                        onlineStatus: 'online',
+                        operator: '李四',
+                        duration: '48小时15分',
+                        reason: '例行上线'
+                    },
+                    {
+                        statusChangeTime: '2024-05-10 18:35:00',
+                        onlineStatus: 'offline',
+                        operator: '王五',
+                        duration: '2小时45分',
+                        reason: '软件更新'
+                    },
+                    {
+                        statusChangeTime: '2024-05-10 15:50:00',
+                        onlineStatus: 'online',
+                        operator: '张三',
+                        duration: '72小时20分',
+                        reason: '恢复生产'
+                    }
+                ]);
+                
+                // 加载历史数据
+                const loadHistoryData = () => {
+                    // 实际应用中根据skidId加载数据
+                    console.log('加载雪橇ID为', skidId.value, '的上下线历史数据');
+                };
+                
+                // 查询数据
+                const searchData = () => {
+                    console.log('搜索条件:', filters);
+                    // 实际应用中会根据筛选条件查询数据
+                };
+                
+                // 重置筛选条件
+                const resetFilters = () => {
+                    filters.onlineStatus = '';
+                    filters.timeRange = [];
+                };
+                
+                // 返回雪橇一览表
+                const backToHome = () => {
+                    window.parent.location.href = 'home.html';
+                };
+                
+                // 分页相关方法
+                const handleSizeChange = (size) => {
+                    console.log('每页显示条数:', size);
+                    // 实际应用中更新分页数据
+                };
+                
+                const handleCurrentChange = (page) => {
+                    console.log('当前页:', page);
+                    currentPage.value = page;
+                    // 实际应用中更新分页数据
+                };
+                
+                return {
+                    currentPage,
+                    skidId,
+                    filters,
+                    chartTimeRange,
+                    chartContainer,
+                    historyList,
+                    searchData,
+                    resetFilters,
+                    backToHome,
+                    handleSizeChange,
+                    handleCurrentChange
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html> 

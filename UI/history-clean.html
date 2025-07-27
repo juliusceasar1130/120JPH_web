@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪橇清洁度检测历史记录</title>
+    <!-- 引入Element Plus样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        .clean-status-c {
+            color: #67C23A;
+            font-weight: bold;
+        }
+        .clean-status-m {
+            color: #E6A23C;
+            font-weight: bold;
+        }
+        .clean-status-s {
+            color: #F56C6C;
+            font-weight: bold;
+        }
+        .echarts-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800 mb-2">雪橇清洁度检测历史记录</h1>
+                <p class="text-gray-500 text-sm">雪橇编号：{{ skidId }}</p>
+            </div>
+            <el-button @click="backToHome" type="primary" plain>返回雪橇一览表</el-button>
+        </div>
+
+        <!-- 筛选条件 -->
+        <el-card class="mb-4">
+            <div class="flex flex-wrap gap-4">
+                <el-select 
+                    placeholder="清洁度状态" 
+                    v-model="filters.cleanStatus" 
+                    class="w-48"
+                    clearable>
+                    <el-option label="清洁 (C)" value="C"></el-option>
+                    <el-option label="中度 (M)" value="M"></el-option>
+                    <el-option label="严重 (S)" value="S"></el-option>
+                </el-select>
+                
+                <el-date-picker
+                    v-model="filters.timeRange"
+                    type="datetimerange"
+                    range-separator="至"
+                    start-placeholder="开始时间"
+                    end-placeholder="结束时间"
+                    class="w-96"
+                    clearable>
+                </el-date-picker>
+            </div>
+            <div class="flex justify-end mt-4">
+                <el-button type="primary" @click="searchData">搜索</el-button>
+                <el-button @click="resetFilters">重置</el-button>
+            </div>
+        </el-card>
+
+        <!-- 趋势图 -->
+        <el-card class="mb-4">
+            <template #header>
+                <div class="flex justify-between items-center">
+                    <span>清洁度变化趋势</span>
+                    <el-radio-group v-model="chartTimeRange" size="small">
+                        <el-radio-button label="week">最近一周</el-radio-button>
+                        <el-radio-button label="month">最近一个月</el-radio-button>
+                        <el-radio-button label="year">最近一年</el-radio-button>
+                    </el-radio-group>
+                </div>
+            </template>
+            <div class="echarts-container" ref="chartContainer"></div>
+        </el-card>
+
+        <!-- 数据表格 -->
+        <el-table
+            :data="historyList"
+            border
+            stripe
+            style="width: 100%"
+            :default-sort="{ prop: 'inspectionTime', order: 'descending' }">
+            <el-table-column prop="inspectionTime" label="检测时间" sortable width="180"></el-table-column>
+            <el-table-column prop="cleanStatus" label="清洁度状态" sortable width="120">
+                <template #default="scope">
+                    <span :class="{
+                        'clean-status-c': scope.row.cleanStatus === 'C',
+                        'clean-status-m': scope.row.cleanStatus === 'M',
+                        'clean-status-s': scope.row.cleanStatus === 'S'
+                    }">
+                        {{ scope.row.cleanStatus === 'C' ? '清洁 (C)' : 
+                           scope.row.cleanStatus === 'M' ? '中度 (M)' : 
+                           scope.row.cleanStatus === 'S' ? '严重 (S)' : '未知' }}
+                    </span>
+                </template>
+            </el-table-column>
+            <el-table-column prop="inspector" label="检测人员" width="120"></el-table-column>
+            <el-table-column prop="inspectionMethod" label="检测方式" width="120"></el-table-column>
+            <el-table-column prop="remarks" label="备注" min-width="200"></el-table-column>
+        </el-table>
+
+        <!-- 分页 -->
+        <div class="flex justify-end mt-4">
+            <el-pagination
+                background
+                layout="total, sizes, prev, pager, next"
+                :total="100"
+                :page-sizes="[10, 20, 50, 100]"
+                :page-size="10"
+                :current-page="currentPage"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange">
+            </el-pagination>
+        </div>
+    </div>
+
+    <!-- 引入Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入Element Plus -->
+    <script src="https://unpkg.com/element-plus@2.10.4/dist/index.full.js"></script>
+    <!-- 引入ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, onMounted, nextTick } = Vue;
+        
+        createApp({
+            setup() {
+                const currentPage = ref(1);
+                const skidId = ref('');
+                const filters = reactive({
+                    cleanStatus: '',
+                    timeRange: []
+                });
+                const chartTimeRange = ref('month');
+                const chartContainer = ref(null);
+                let chart = null;
+                
+                // 解析URL参数
+                onMounted(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const id = urlParams.get('skidId');
+                    if (id) {
+                        skidId.value = id;
+                        // 加载数据
+                        loadHistoryData();
+                    }
+                    
+                    // 初始化图表
+                    nextTick(() => {
+                        initChart();
+                    });
+                });
+                
+                // 初始化趋势图
+                const initChart = () => {
+                    if (chartContainer.value) {
+                        chart = echarts.init(chartContainer.value);
+                        updateChart();
+                        
+                        // 监听窗口大小变化，重置图表大小
+                        window.addEventListener('resize', () => {
+                            chart.resize();
+                        });
+                    }
+                };
+                
+                // 更新趋势图数据
+                const updateChart = () => {
+                    // 模拟趋势数据
+                    const dates = [];
+                    const statusValues = [];
+                    const statusMap = { 'C': 1, 'M': 2, 'S': 3 };
+                    const today = new Date();
+                    
+                    // 根据选择的时间范围生成日期和数据
+                    let days = 30; // 默认一个月
+                    if (chartTimeRange.value === 'week') {
+                        days = 7;
+                    } else if (chartTimeRange.value === 'year') {
+                        days = 365;
+                    }
+                    
+                    for (let i = days; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(today.getDate() - i);
+                        dates.push(date.toISOString().split('T')[0]);
+                        
+                        // 模拟清洁度状态数据（随机生成）
+                        const rnd = Math.random();
+                        let status;
+                        if (rnd < 0.5) {
+                            status = 'C';
+                        } else if (rnd < 0.8) {
+                            status = 'M';
+                        } else {
+                            status = 'S';
+                        }
+                        statusValues.push(statusMap[status]);
+                    }
+                    
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: function(params) {
+                                const statusText = {
+                                    1: '清洁 (C)',
+                                    2: '中度 (M)',
+                                    3: '严重 (S)'
+                                };
+                                return `${params[0].axisValue}<br/>清洁度状态: ${statusText[params[0].value]}`;
+                            }
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: dates,
+                            axisLabel: {
+                                rotate: 45,
+                                interval: Math.ceil(dates.length / 10)
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            min: 0,
+                            max: 4,
+                            interval: 1,
+                            axisLabel: {
+                                formatter: function (value) {
+                                    const labels = ['', '清洁 (C)', '中度 (M)', '严重 (S)', ''];
+                                    return labels[value] || '';
+                                }
+                            }
+                        },
+                        visualMap: {
+                            show: false,
+                            pieces: [
+                                {gt: 0, lte: 1.5, color: '#67C23A'},
+                                {gt: 1.5, lte: 2.5, color: '#E6A23C'},
+                                {gt: 2.5, lte: 3.5, color: '#F56C6C'}
+                            ]
+                        },
+                        series: [
+                            {
+                                data: statusValues,
+                                type: 'line',
+                                smooth: true,
+                                lineStyle: {
+                                    width: 3
+                                },
+                                symbol: 'circle',
+                                symbolSize: 8
+                            }
+                        ]
+                    };
+                    
+                    chart.setOption(option);
+                };
+                
+                // 模拟历史数据
+                const historyList = ref([
+                    {
+                        inspectionTime: '2024-05-15 08:30:25',
+                        cleanStatus: 'C',
+                        inspector: '张三',
+                        inspectionMethod: '自动检测',
+                        remarks: '例行检查'
+                    },
+                    {
+                        inspectionTime: '2024-05-14 09:15:32',
+                        cleanStatus: 'C',
+                        inspector: '李四',
+                        inspectionMethod: '人工检测',
+                        remarks: '清洁后复检'
+                    },
+                    {
+                        inspectionTime: '2024-05-13 15:45:18',
+                        cleanStatus: 'M',
+                        inspector: '张三',
+                        inspectionMethod: '自动检测',
+                        remarks: '发现部分灰尘积累'
+                    },
+                    {
+                        inspectionTime: '2024-05-12 10:20:07',
+                        cleanStatus: 'M',
+                        inspector: '王五',
+                        inspectionMethod: '自动检测',
+                        remarks: '需要定期清洁'
+                    },
+                    {
+                        inspectionTime: '2024-05-11 14:05:22',
+                        cleanStatus: 'S',
+                        inspector: '李四',
+                        inspectionMethod: '人工检测',
+                        remarks: '发现污垢严重积累'
+                    },
+                    {
+                        inspectionTime: '2024-05-10 11:50:39',
+                        cleanStatus: 'S',
+                        inspector: '王五',
+                        inspectionMethod: '自动检测',
+                        remarks: '需要立即清洁'
+                    },
+                    {
+                        inspectionTime: '2024-05-09 16:25:10',
+                        cleanStatus: 'C',
+                        inspector: '张三',
+                        inspectionMethod: '人工检测',
+                        remarks: '清洁后复检'
+                    }
+                ]);
+                
+                // 加载历史数据
+                const loadHistoryData = () => {
+                    // 实际应用中根据skidId加载数据
+                    console.log('加载雪橇ID为', skidId.value, '的历史数据');
+                };
+                
+                // 查询数据
+                const searchData = () => {
+                    console.log('搜索条件:', filters);
+                    // 实际应用中会根据筛选条件查询数据
+                };
+                
+                // 重置筛选条件
+                const resetFilters = () => {
+                    filters.cleanStatus = '';
+                    filters.timeRange = [];
+                };
+                
+                // 返回雪橇一览表
+                const backToHome = () => {
+                    window.parent.location.href = 'home.html';
+                };
+                
+                // 分页相关方法
+                const handleSizeChange = (size) => {
+                    console.log('每页显示条数:', size);
+                    // 实际应用中更新分页数据
+                };
+                
+                const handleCurrentChange = (page) => {
+                    console.log('当前页:', page);
+                    currentPage.value = page;
+                    // 实际应用中更新分页数据
+                };
+                
+                return {
+                    currentPage,
+                    skidId,
+                    filters,
+                    chartTimeRange,
+                    chartContainer,
+                    historyList,
+                    searchData,
+                    resetFilters,
+                    backToHome,
+                    handleSizeChange,
+                    handleCurrentChange
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html> 

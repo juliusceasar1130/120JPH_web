@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雪橇管理系统原型图</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Element Plus样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+        }
+        .prototype-container {
+            padding: 20px;
+        }
+        .page-frame {
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            background-color: white;
+        }
+        .page-title {
+            padding: 12px 20px;
+            border-bottom: 1px solid #ebeef5;
+            background-color: #f5f7fa;
+            font-weight: bold;
+            color: #303133;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-blue-600 text-white py-4 px-6 flex justify-between items-center shadow-md">
+        <h1 class="text-2xl font-bold">雪橇管理系统原型图</h1>
+        <div class="text-sm">版本: 1.0.0 | 设计日期: 2024-05-15</div>
+    </header>
+
+    <div class="prototype-container">
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-700 mb-2">原型图说明</h2>
+            <p class="text-gray-600">
+                本原型图展示了雪橇skid清洁度状态管理系统的主要界面，包括雪橇一览表、清洁度检测历史记录查询以及上下线记录查询功能。
+                使用了Element Plus组件库和Tailwind CSS进行界面设计，确保界面美观且符合现代Web设计规范。
+            </p>
+        </div>
+
+        <!-- 雪橇一览表页面 -->
+        <div class="page-frame">
+            <div class="page-title">雪橇一览表 (home.html)</div>
+            <iframe src="home.html"></iframe>
+        </div>
+
+        <!-- 清洁度检测历史记录页面 -->
+        <div class="page-frame">
+            <div class="page-title">雪橇清洁度检测历史记录 (history-clean.html)</div>
+            <iframe src="history-clean.html"></iframe>
+        </div>
+
+        <!-- 上下线历史记录页面 -->
+        <div class="page-frame">
+            <div class="page-title">雪橇上下线历史记录 (history-status.html)</div>
+            <iframe src="history-status.html"></iframe>
+        </div>
+    </div>
+
+    <!-- 引入Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- 引入Element Plus -->
+    <script src="https://unpkg.com/element-plus@2.10.4/dist/index.full.js"></script>
+</body>
+</html> 

@@ -1,0 +1,11 @@
+{
+  "theme": "GitHub",
+  "selectedAuthType": "oauth-personal", 
+  "mcpServers": {
+    "playwright": {
+    "command": "npx",
+    "args": ["-y", "@executeautomation/playwright-mcp-server"]
+    }
+  },
+   "contextFileName": ["gemini_agent.md", "gemini_agent2.md" ]
+}

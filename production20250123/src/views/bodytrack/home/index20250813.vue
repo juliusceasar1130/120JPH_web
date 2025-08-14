@@ -1269,7 +1269,9 @@ const colorOptions = [
 const bodyTypeOptions = [
   { label: 'Purple', value: 'XV', type: 'success', plain: true },
   { label: 'A7', value: 'SS', type: 'warning', plain: true },
-  { label: 'A5', value: 'V', type: 'danger', plain: true },
+  { label: 'A5', value: 'V', type: 'danger', plain: true },  
+  { label: 'E5', value: 'X', type: 'warning', plain: true },  
+  { label: 'Q4', value: '8', type: 'success', plain: true },
 ]
 
 // 快速选择颜色
@@ -1337,8 +1339,17 @@ const datatimeformat = (value: string) => {
 }
 
 const datepickup = (value: string[]) => {
-  params.datetime_start = value[0]
-  params.datetime_end = value[1]
+  if (value && value.length === 2) {
+    // 将本地时间转换为UTC时间字符串，但保留当前选择的表示时间
+    // 使用moment处理时区转换
+    params.datetime_start = moment(value[0]).format('YYYY-MM-DDTHH:mm:ss')
+    params.datetime_end = moment(value[1]).format('YYYY-MM-DDTHH:mm:ss')
+    console.log('选择的时间范围:', value)
+    console.log('处理后的查询参数:', params)
+  } else {
+    params.datetime_start = ''
+    params.datetime_end = ''
+  }
 }
 const shortcuts = [
   {

@@ -1,5 +1,7 @@
 <!--
-最后修改时间->2025-03-22 14:00
+最后修改时间->2025-08-13 10:30
+主要内容->为右侧主要区域增加放大和恢复的切换功能，支持全屏弹窗显示
+作者->chenliang
 -->
 <template>
   <div class="home-container">
@@ -162,14 +164,27 @@
       <!-- 右侧主要区域 -->
       <div class="main-area">
 
-        <el-form-item label="车号">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <el-input v-model="params.BODY_ID" placeholder="请输入车号" style="flex: 1; margin-right: 10px;"></el-input>
-            <el-button type="primary" @click="searchbyfis">搜索</el-button>
-            <el-button type="info" @click="toTOP">TOP</el-button>
-            <el-button type="info" @click="toTOP">PVC</el-button>
-            <el-button type="info" @click="toTOP">PT</el-button>         
-
+        <el-form-item label="车号" class="custom-form-item-layout">
+          <div class="form-content-container">
+            <div class="left-controls">
+              <el-input v-model="params.BODY_ID" placeholder="请输入车号" class="car-input"></el-input>
+              <el-button type="primary" @click="searchbyfis">
+                <el-icon><Search /></el-icon>
+                搜索
+              </el-button>
+              <el-button type="info" @click="toTOP">TOP</el-button>
+              <el-button type="info" @click="toTOP">PVC</el-button>
+              <el-button type="info" @click="toTOP">PT</el-button>
+            </div>
+            <div class="right-controls">
+              <el-button 
+                type="warning" 
+                :icon="isFullscreen ? Aim : FullScreen" 
+                @click="toggleFullscreen"
+                title="全屏显示/退出全屏">
+                {{ isFullscreen ? '退出' : '放大' }}
+              </el-button>
+            </div>
           </div>
         </el-form-item>
 
@@ -177,7 +192,7 @@
         <div v-loading="loading1" class="production-line-container">
           <div class="background-image" ref="backgroundImageRef" @click="handleBackgroundClick($event)">
             <div class="background-actual" ref="actualImageRef">
-              <TrackPoints :pointFirst="pointFirst" :pointLast="pointLast" :isDebugMode="isDebugMode"
+              <TrackPoints :pointFirst="pointFirst" :pointLast="String(pointLast)" :isDebugMode="isDebugMode"
                 :points="trackPoints" :isEditingIndex="isEditingIndex" :dotSize="12" :dotColor="'#ff0000'"
                 :activeColor="'#ffff00'" @point-click="handlePointClick" />
 
@@ -333,6 +348,123 @@
         </div>
       </div>
     </div>
+
+    <!-- 全屏弹窗模态框 -->
+    <div v-if="isFullscreen" class="fullscreen-modal-overlay" @click.self="closeFullscreen">
+      <div class="fullscreen-modal" @click.stop>
+        <!-- 弹窗标题栏 -->
+        <div class="fullscreen-modal-header">
+          <div class="fullscreen-modal-title">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>车身追踪详细视图</span>
+            <el-tag v-if="params.BODY_ID" size="small" type="success" class="fullscreen-header-tag">
+              当前车号: {{ params.BODY_ID }}
+            </el-tag>
+          </div>
+          <div class="fullscreen-modal-actions">
+            <el-button type="primary" size="small" @click="searchbyfis" :disabled="!params.BODY_ID">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+            <el-button type="info" size="small" @click="closeFullscreen">
+              <el-icon><Aim /></el-icon>
+              退出全屏
+            </el-button>
+          </div>
+        </div>
+
+        <!-- 弹窗车号输入区域 -->
+        <div class="fullscreen-search-area">
+          <el-form-item label="车号">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <el-input v-model="params.BODY_ID" placeholder="请输入车号" style="flex: 1;"></el-input>
+              <el-button type="primary" @click="searchbyfis">
+                <el-icon><Search /></el-icon>
+                搜索
+              </el-button>
+              <el-button type="info" @click="toTOP">TOP</el-button>
+              <el-button type="info" @click="toTOP">PVC</el-button>
+              <el-button type="info" @click="toTOP">PT</el-button>
+            </div>
+          </el-form-item>
+        </div>
+
+        <!-- 弹窗画面内容 -->
+        <div class="fullscreen-content">
+          <div v-loading="loading1" class="fullscreen-production-line-container">
+            <div class="background-image" ref="fullscreenBackgroundRef" @click="handleBackgroundClick($event)">
+              <div class="background-actual" ref="fullscreenActualRef">
+                <TrackPoints :pointFirst="pointFirst" :pointLast="String(pointLast)" :isDebugMode="isDebugMode"
+                  :points="trackPoints" :isEditingIndex="isEditingIndex" :dotSize="12" :dotColor="'#ff0000'"
+                  :activeColor="'#ffff00'" @point-click="handlePointClick" />
+
+                <!-- 调试点标记 -->
+                <div v-if="isDebugMode" class="debug-marker"
+                  :style="{ left: debugPosition.x + '%', top: debugPosition.y + '%' }" @mousedown.stop="startDragMarker">
+                </div>
+              </div>
+
+              <!-- 调试工具面板 -->
+              <div class="debug-panel" :style="debugPanelStyle" @click.stop>
+                <div :class="isDebugMode ? 'debug-panel-header' : 'debug-panel-header-hidden'"
+                  @mousedown.prevent="startDragPanel">
+                  <button @click="toggleDebugMode" class="debug-toggle">
+                    {{ isDebugMode ? '关闭调试' : '开启调试' }}
+                  </button>
+                  <div class="drag-handle">拖动</div>
+                </div>
+
+                <div v-if="isDebugMode" class="position-debug-tool">
+                  <h3>位置调试工具</h3>
+                  <div class="debug-controls">
+                    <div>
+                      <label>X位置(%):
+                        <input type="number" v-model="xPosition" min="0" max="100" step="0.5" />
+                      </label>
+                    </div>
+                    <div>
+                      <label>Y位置(%):
+                        <input type="number" v-model="yPosition" min="0" max="100" step="0.5" />
+                      </label>
+                    </div>
+                    <div class="debug-info">
+                      提示: 点击背景图任意位置可直接定位调试点
+                    </div>
+                    <div class="debug-info">
+                      当前调试点坐标: ({{ debugPosition.x }}%, {{ debugPosition.y }}%)
+                    </div>
+                    <div>
+                      <button @click="addNewPoint" class="add-point-btn">添加当前位置按钮</button>
+                    </div>
+                    <div>
+                      <button @click="savePoints" class="save-points-btn">保存点位</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 调试信息层 -->
+            <div v-if="isDebugMode" class="debug-info-overlay">
+              <div>
+                <h4>当前按钮位置:</h4>
+                <ul>
+                  <li v-for="(point, index) in trackPoints" :key="'info-' + index">
+                    {{ point.id }}: ({{ point.xPercent }}%, {{ point.yPercent }}%)
+                  </li>
+                </ul>
+                <h4>窗口信息:</h4>
+                <div>
+                  <p>窗口尺寸: {{ windowSize.width }}x{{ windowSize.height }}</p>
+                  <p>图片容器: {{ containerSize.width }}x{{ containerSize.height }}</p>
+                  <p>实际图片区: {{ actualImageSize.width }}x{{ actualImageSize.height }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -349,7 +481,7 @@ import useLayOutSettingStore from '@/store/modules/setting'
 import useBodyTrack from '@/views/bodytrack/store/bodytrack'
 //获取路由对象
 import { useRouter } from 'vue-router'
-import { DataLine, Location, Timer, InfoFilled, DataAnalysis, Document } from '@element-plus/icons-vue'
+import { DataLine, Location, Timer, InfoFilled, DataAnalysis, Document, FullScreen, Aim, Search } from '@element-plus/icons-vue'
 let $router = useRouter()
 
 let bodyTrackStore = useBodyTrack()
@@ -374,6 +506,10 @@ let pointLast = ref(0)
 const backgroundImageRef = ref(null);
 const actualImageRef = ref(null);
 
+// 全屏模式的背景图DOM引用
+const fullscreenBackgroundRef = ref(null);
+const fullscreenActualRef = ref(null);
+
 // 窗口和图片尺寸信息
 const windowSize = reactive({
   width: window.innerWidth,
@@ -395,6 +531,9 @@ const actualImageSize = reactive({
 // 调试模式标志
 const isDebugMode = ref(false);
 
+// 全屏模式标志
+const isFullscreen = ref(false);
+
 // 调试位置
 const debugPosition = reactive({
   x: 50,
@@ -407,7 +546,7 @@ const yPosition = ref(debugPosition.y);
 
 // 监听输入框值变化，更新调试点位置
 watch(xPosition, (newValue) => {
-  const value = parseFloat(newValue);
+  const value = parseFloat(String(newValue));
   if (!isNaN(value)) {
     debugPosition.x = Math.max(0, Math.min(100, value));
     console.log(`X位置已更新: ${debugPosition.x}%`);
@@ -415,7 +554,7 @@ watch(xPosition, (newValue) => {
 });
 
 watch(yPosition, (newValue) => {
-  const value = parseFloat(newValue);
+  const value = parseFloat(String(newValue));
   if (!isNaN(value)) {
     debugPosition.y = Math.max(0, Math.min(100, value));
     console.log(`Y位置已更新: ${debugPosition.y}%`);
@@ -435,6 +574,25 @@ watch(() => debugPosition.y, (newValue) => {
 const toggleDebugMode = () => {
   isDebugMode.value = !isDebugMode.value;
   console.log('调试模式: ' + (isDebugMode.value ? '开启' : '关闭'));
+};
+
+// 切换全屏模式
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value;
+  console.log('全屏模式: ' + (isFullscreen.value ? '开启' : '关闭'));
+  
+  // 全屏模式下更新图片尺寸
+  if (isFullscreen.value) {
+    setTimeout(() => {
+      updateFullscreenImageDimensions();
+    }, 100);
+  }
+};
+
+// 关闭全屏模式
+const closeFullscreen = () => {
+  isFullscreen.value = false;
+  console.log('全屏模式已关闭');
 };
 
 // 计算背景图实际显示尺寸和位置
@@ -485,6 +643,54 @@ const updateImageDimensions = () => {
     }
 
     console.log('图片显示尺寸已更新:', actualImageSize);
+  };
+};
+
+// 计算全屏模式下背景图实际显示尺寸和位置
+const updateFullscreenImageDimensions = () => {
+  if (!fullscreenBackgroundRef.value) return;
+
+  // 更新窗口尺寸
+  windowSize.width = window.innerWidth;
+  windowSize.height = window.innerHeight;
+
+  // 获取全屏容器尺寸
+  const container = fullscreenBackgroundRef.value;
+  const containerWidth = container.offsetWidth;
+  const containerHeight = container.offsetHeight;
+
+  // 计算实际图片显示区域
+  const imageUrl = getComputedStyle(container).backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
+  const img = new Image();
+  img.src = imageUrl;
+
+  img.onload = () => {
+    const imgRatio = img.width / img.height;
+    const containerRatio = containerWidth / containerHeight;
+
+    let actualWidth, actualHeight, actualTop = 0, actualLeft = 0;
+
+    if (imgRatio > containerRatio) {
+      // 图片比容器更宽，上下会有空白
+      actualWidth = containerWidth;
+      actualHeight = containerWidth / imgRatio;
+      actualTop = (containerHeight - actualHeight) / 2;
+    } else {
+      // 图片比容器更高，左右会有空白
+      actualHeight = containerHeight;
+      actualWidth = containerHeight * imgRatio;
+      actualLeft = (containerWidth - actualWidth) / 2;
+    }
+
+    // 更新全屏虚拟图片容器样式
+    if (fullscreenActualRef.value) {
+      fullscreenActualRef.value.style.width = `${actualWidth}px`;
+      fullscreenActualRef.value.style.height = `${actualHeight}px`;
+      fullscreenActualRef.value.style.top = `${actualTop}px`;
+      fullscreenActualRef.value.style.left = `${actualLeft}px`;
+    }
+
+    console.log('全屏模式图片显示尺寸已更新:', { actualWidth, actualHeight, actualTop, actualLeft });
   };
 };
 
@@ -669,8 +875,8 @@ const openEditDialog_norm = (point: any, index: any) => {
 // 更新预览
 const updatePreview = () => {
   // 验证输入，确保是有效数值
-  let xPercent = parseFloat(editingPoint.xPercent);
-  let yPercent = parseFloat(editingPoint.yPercent);
+  let xPercent = parseFloat(String(editingPoint.xPercent));
+  let yPercent = parseFloat(String(editingPoint.yPercent));
 
   if (!isNaN(xPercent) && !isNaN(yPercent)) {
     // 限制在0-100范围内
@@ -712,8 +918,8 @@ const savePointChanges = () => {
     }
 
     // 验证位置百分比
-    const xPercent = parseFloat(editingPoint.xPercent);
-    const yPercent = parseFloat(editingPoint.yPercent);
+    const xPercent = parseFloat(String(editingPoint.xPercent));
+    const yPercent = parseFloat(String(editingPoint.yPercent));
 
     if (isNaN(xPercent) || isNaN(yPercent) || xPercent < 0 || xPercent > 100 || yPercent < 0 || yPercent > 100) {
       alert('X和Y位置必须是0-100之间的数值!');
@@ -774,7 +980,19 @@ const handleResize = () => {
 // 添加键盘事件处理函数
 const handleKeyPress = (event: KeyboardEvent) => {
   
-  // 使用 Ctrl + D 作为快捷键
+  // 使用 ESC 键关闭全屏
+  if (event.key === 'Escape' && isFullscreen.value) {
+    event.preventDefault();
+    closeFullscreen();
+    ElMessage({
+      type: 'info',
+      message: '已退出全屏模式',
+      duration: 2000
+    });
+    return;
+  }
+  
+  // 使用 Ctrl + M 作为调试模式快捷键
   if (event.ctrlKey && event.key === 'm') {
     console.log("调试模式开启")
     event.preventDefault(); // 阻止默认行为
@@ -816,7 +1034,9 @@ onMounted(async () => {
   // 获取实际图片尺寸和容器尺寸比例
   try {
     const img = new Image();
-    img.src = require('@/assets/layout.png');
+    // 使用import方式加载图片
+    const layoutImage = await import('@/assets/Layout.png');
+    img.src = layoutImage.default;
     img.onload = () => {
       console.log(`图片加载成功，实际尺寸: ${img.width}x${img.height}`);
       console.log(`容器尺寸: ${bgContainer.offsetWidth}x${bgContainer.offsetHeight}`);
@@ -910,7 +1130,7 @@ const parseXMLString = (xmlString) => {
     console.log('清理后的XML:', cleanXml.substring(0, 100) + '...');
 
     const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(cleanXml, 'text/xml');
+    let xmlDoc = parser.parseFromString(cleanXml, 'text/xml');
 
     // 检查解析错误
     const parseError = xmlDoc.getElementsByTagName('parsererror');
@@ -1577,7 +1797,7 @@ const handleCurrentChange = () => {
   flex: 1;
   /* 让背景图占据剩余空间 */
   width: 100%;
-  background-image: url('@/assets/layout.png');
+  background-image: url('@/assets/Layout.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -2122,5 +2342,196 @@ const handleCurrentChange = () => {
 .total-count-row{
   display: flex;
   /* align-self:first baseline; */
+}
+
+/* 全屏弹窗样式 */
+.fullscreen-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+}
+
+.fullscreen-modal {
+  width: 95vw;
+  height: 95vh;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fullscreen-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom: 1px solid #e0e6ed;
+}
+
+.fullscreen-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.fullscreen-modal-title .el-icon {
+  font-size: 20px;
+}
+
+.fullscreen-header-tag {
+  margin-left: 15px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+}
+
+.fullscreen-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.fullscreen-search-area {
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.fullscreen-content {
+  flex: 1;
+  padding: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-production-line-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+/* 全屏模式下的背景图样式 */
+.fullscreen-modal .background-image {
+  flex: 1;
+  width: 100%;
+  background-image: url('@/assets/Layout.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  position: relative;
+  cursor: crosshair;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 响应式适配 */
+@media screen and (max-width: 1024px) {
+  .fullscreen-modal {
+    width: 95vw;
+    height: 95vh;
+  }
+  
+  .fullscreen-modal-header {
+    padding: 12px 15px;
+  }
+  
+  .fullscreen-modal-title {
+    font-size: 16px;
+  }
+  
+  .fullscreen-search-area {
+    padding: 12px 15px;
+  }
+  
+  .fullscreen-content {
+    padding: 15px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .fullscreen-modal {
+    width: 98vw;
+    height: 98vh;
+  }
+  
+  .fullscreen-modal-header {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  
+  .fullscreen-modal-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .fullscreen-search-area {
+    padding: 10px 12px;
+  }
+  
+  .fullscreen-content {
+    padding: 12px;
+  }
+}
+
+/* 车号输入区域布局样式 */
+.custom-form-item-layout :deep(.el-form-item__content) {
+  width: 100% !important;
+}
+
+.form-content-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 40px;
+}
+
+.left-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.car-input {
+  flex: 1;
+  max-width: 300px;
+}
+
+.right-controls {
+  display: flex;
+  align-items: center;
+  margin-left: 20px;
 }
 </style>

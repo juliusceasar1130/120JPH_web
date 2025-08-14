@@ -1,0 +1,168 @@
+# 最后修改时间->2025-08-11 16:40
+# 作者：Docker部署配置
+# 功能：Vue3项目Docker Compose编排配置
+
+version: '3.8'
+
+# ===============================
+# 服务定义
+# ===============================
+services:
+  # Vue3前端应用服务
+  vue-app: # ← 这里定义了服务名称
+    # 服务基本配置
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      args:
+        - NODE_ENV=production
+    
+    # 容器名称
+    container_name: vue3-production-app
+    
+    # 重启策略
+    restart: unless-stopped
+    
+    # 端口映射
+    ports:
+      - "80:80"
+      - "443:443"  # 如果使用HTTPS
+    
+    # 环境变量
+    environment:
+      - TZ=Asia/Shanghai
+      - NODE_ENV=production
+    
+    # 卷挂载
+    volumes:
+      # 日志持久化
+      - ./logs/nginx:/var/log/nginx:rw
+      # 如果需要自定义配置（可选）
+      # - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # 如果需要SSL证书（可选）
+      # - ./ssl:/etc/nginx/ssl:ro
+    
+    # 网络配置
+    networks:
+      - vue-network
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    # 依赖关系（如果有其他服务）
+    # depends_on:
+    #   - api-backend
+    
+    # 标签
+    labels:
+      # 下面这些是Docker容器的自定义标签（labels），用于服务编排、自动化代理（如Traefik）、文档描述等场景
+      # 这些labels不是必须的，只有在你需要用Traefik等代理或自动化工具时才需要配置
+      # 如果你不需要用Traefik或相关自动化代理，可以删除或注释掉这些labels
+      # traefik.enable=true：启用Traefik代理该容器
+      - "traefik.enable=true"
+      # traefik.http.routers.vue-app.rule=Host(`localhost`)：定义Traefik路由规则，只有访问localhost域名时才会将流量转发到该容器
+      - "traefik.http.routers.vue-app.rule=Host(`localhost`)"
+      # com.example.description=Vue3 Production App：自定义描述标签，说明该容器是Vue3生产环境应用
+      - "com.example.description=Vue3 Production App"
+      # com.example.version=1.0：自定义版本标签，标记当前容器的版本号为1.0
+      - "com.example.version=1.0"
+
+  # ===============================
+  # 可选：API后端服务示例
+  # ===============================
+  # api-backend:
+  #   image: your-api-image:latest
+  #   container_name: vue3-api-backend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - DATABASE_URL=${DATABASE_URL}
+  #   networks:
+  #     - vue-network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+  # ===============================
+  # 可选：数据库服务示例
+  # ===============================
+  # database:
+  #   image: mysql:8.0
+  #   container_name: vue3-mysql
+  #   restart: unless-stopped
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  #     MYSQL_DATABASE: ${MYSQL_DATABASE}
+  #     MYSQL_USER: ${MYSQL_USER}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #     - ./mysql/init:/docker-entrypoint-initdb.d:ro
+  #   networks:
+  #     - vue-network
+  #   healthcheck:
+  #     test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+
+# ===============================
+# 网络定义
+# ===============================
+networks:
+  vue-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+# ===============================
+# 卷定义
+# ===============================
+volumes:
+  # Nginx日志卷
+  nginx_logs:
+    driver: local
+  
+  # 可选：数据库数据卷
+  # mysql_data:
+  #   driver: local
+  
+  # 可选：应用数据卷
+  # app_data:
+  #   driver: local
+
+# ===============================
+# 扩展配置
+# ===============================
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10M"
+    max-file: "3"
+
+# 所有服务使用统一日志配置
+x-common-variables: &common-variables
+  TZ: Asia/Shanghai
+  NODE_ENV: production

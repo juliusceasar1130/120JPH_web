@@ -1,13 +1,24 @@
+/**
+ * 最后修改时间->2025-08-11 16:40
+ * 作者：chenliang
+ */
 //进行二次封装，请求和响应拦截器
 import axios from "axios";
 import { ElMessage } from "element-plus";
 //引入用户相关的仓库
 import useUserStore from '@/store/modules/user'
-//第一步利用Create方法，创建实例（）
+
+// 获取环境变量中的服务器地址
+// 这里的 import.meta.env.VITE_SERVE 来源于 Vite 的环境变量机制，
+// 实际值在根目录下的 .env.development 或 .env.production 文件中配置，
+// 例如 VITE_SERVE = 'http://localhost:8080'
+const baseURL = import.meta.env.VITE_SERVE || 'http://localhost:8080';
+
+//第一步利用Create方法，创建实例
 let request = axios.create({
-    //基础路径
-    baseURL: 'http://172.22.44.99:8080/',//'http://localhost:8080/'
-    timeout: 50000//超时时间
+    //基础路径 - 使用环境变量
+    baseURL: baseURL,
+    timeout: 5000//超时时间
 });
 
 //第二步：request实例添加请求和拦截器,有两个拦截器，使用第一个

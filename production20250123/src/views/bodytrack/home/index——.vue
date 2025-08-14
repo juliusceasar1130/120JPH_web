@@ -814,7 +814,7 @@ onMounted(async () => {
   // 获取实际图片尺寸和容器尺寸比例
   try {
     const img = new Image();
-    img.src = require('@/assets/layout.png');
+    img.src = require('@/assets/Layout.png');
     img.onload = () => {
       console.log(`图片加载成功，实际尺寸: ${img.width}x${img.height}`);
       console.log(`容器尺寸: ${bgContainer.offsetWidth}x${bgContainer.offsetHeight}`);
@@ -1545,7 +1545,7 @@ const handleCurrentChange = () => {
   flex: 1;
   /* 让背景图占据剩余空间 */
   width: 100%;
-  background-image: url('@/assets/layout.png');
+  background-image: url('@/assets/Layout.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

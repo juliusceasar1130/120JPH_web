@@ -1,0 +1,103 @@
+# 最后修改时间->2025-08-11 16:40
+# 作者：Docker部署配置
+# 功能：Docker构建时排除不必要的文件
+
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 构建产物
+dist
+.output
+.nuxt
+.next
+.vuepress/dist
+.serverless
+.fusebox/
+.dynamodb/
+.tern-port
+
+# 开发工具
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# 日志文件
+logs
+*.log
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 环境文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 测试覆盖率
+coverage
+*.lcov
+.nyc_output
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# 文档
+README.md
+docs/
+*.md
+
+# Docker相关（避免递归复制）
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# 备份文件
+backup/
+*.backup
+*.bak
+
+# 临时文件
+tmp/
+temp/
+.tmp/
+.temp/
+
+# ESLint
+.eslintcache
+
+# Prettier
+.prettierignore
+
+# Stylelint
+.stylelintcache
+
+# TypeScript
+*.tsbuildinfo
+
+# Lock files (保留pnpm-lock.yaml，其他可排除)
+yarn.lock
+package-lock.json
+
+# Cache directories
+.cache
+.parcel-cache
+.vite
+
+# OS generated files
+ehthumbs.db
+Desktop.ini
+
+# 其他工具
+.husky
+commitlint.config.cjs

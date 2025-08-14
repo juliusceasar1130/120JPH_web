@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --open",
     "build:test": "vue-tsc && vite build --mode test",
-    "build:pro": "vue-tsc && vite build --mode production",
+    "build:pro": "vite build --mode production",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src",
@@ -16,7 +16,7 @@
     "lint:style": "stylelint src/**/*.{css,scss,vue} --cache --fix",
     "prepare": "husky install",
     "commitlint": "commitlint --config commitlint.config.cjs -e -V",
-    "preinstall": "node ./scripts/preinstall.js"
+    "preinstall": "node ./scritps/preinstall.js"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
